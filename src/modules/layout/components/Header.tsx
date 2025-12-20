@@ -17,9 +17,9 @@ export function Header() {
   return (
     <header className="border-b">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to="/learn" className="flex items-center gap-2">
-          <img src={logo} alt="AI Coding Tutor" className="h-4 w-auto" />
-          <span className="text-sm">AI Coding Tutor</span>
+        <Link to="/learn" className="flex flex-col items-center gap-1">
+          <img src={logo} alt="AI Coding Tutor" className="h-4 w-auto mt-2" />
+          <span className="text-xs">AI Coding Tutor</span>
         </Link>
 
         <div className="flex items-center gap-4">
