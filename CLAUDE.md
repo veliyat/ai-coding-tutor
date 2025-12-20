@@ -26,19 +26,35 @@ src/
 │   │
 │   ├── layout/                   # ✅ Implemented
 │   │   ├── components/
-│   │   │   └── Header.tsx        # Logo, avatar, sign out
+│   │   │   └── Header.tsx        # Logo, avatar dropdown, sign out
 │   │   └── index.ts
 │   │
-│   ├── lesson/                   # 🔲 Not yet implemented
+│   ├── lesson/                   # ✅ Implemented
 │   │   ├── components/
+│   │   │   ├── LessonContent.tsx # Renders explanation + code sections
+│   │   │   ├── ExercisePanel.tsx # Exercise description + hints
+│   │   │   ├── LessonLayout.tsx  # Two-panel lesson view
+│   │   │   └── ModuleCard.tsx    # Dashboard module cards
 │   │   ├── hooks/
-│   │   ├── lib/
-│   │   └── types/
+│   │   │   ├── useModules.ts     # Fetch all modules + lessons
+│   │   │   ├── useLesson.ts      # Fetch single lesson by slug
+│   │   │   └── useProgress.ts    # Track student progress
+│   │   ├── types/
+│   │   │   └── index.ts          # LessonContent, Exercise, etc.
+│   │   └── index.ts
 │   │
-│   ├── editor/                   # 🔲 Not yet implemented
+│   ├── editor/                   # ✅ Implemented
 │   │   ├── components/
+│   │   │   ├── CodeEditor.tsx    # Monaco editor wrapper
+│   │   │   ├── OutputPanel.tsx   # Shows output + test results
+│   │   │   └── EditorPanel.tsx   # Combined editor + output
 │   │   ├── hooks/
-│   │   └── lib/
+│   │   │   └── useCodeRunner.ts  # Run code, get results
+│   │   ├── lib/
+│   │   │   └── sandbox.ts        # Execute JS, capture console.log
+│   │   ├── types/
+│   │   │   └── index.ts          # TestCase, ExecutionResult
+│   │   └── index.ts
 │   │
 │   └── tutor/                    # 🔲 Not yet implemented
 │       ├── components/

@@ -4,11 +4,17 @@ An adaptive AI programming tutor that teaches JavaScript step-by-step with perso
 
 ## Features
 
-- **Adaptive Learning** — Adjusts difficulty based on student performance
-- **Curriculum-Driven** — Structured lessons, not free-form chat
-- **Personalized Onboarding** — Tailors experience to learning goals and style
-- **Real-time Code Execution** — Write and run JavaScript in the browser
+### Implemented
+- **Curriculum-Driven Learning** — Structured lessons covering JavaScript fundamentals
+- **Personalized Onboarding** — Choose avatar, learning goal, experience level, and style
+- **Interactive Code Editor** — Monaco-powered editor with syntax highlighting
+- **Real-time Code Execution** — Run JavaScript and see output instantly
+- **Automated Testing** — Test cases validate your solutions
+- **Progress Tracking** — Auto-completion when tests pass
+
+### Coming Soon
 - **AI Tutor** — Patient mentor that gives hints, not answers
+- **Adaptive Difficulty** — Adjusts based on student performance
 
 ## Tech Stack
 
@@ -68,9 +74,14 @@ An adaptive AI programming tutor that teaches JavaScript step-by-step with perso
 
 ```
 src/
-├── modules/          # Feature modules (auth, lesson, editor, tutor)
+├── modules/
+│   ├── auth/         # Authentication, onboarding, profiles
+│   ├── layout/       # Header, navigation
+│   ├── lesson/       # Curriculum display, progress tracking
+│   ├── editor/       # Monaco editor, code execution, testing
+│   └── tutor/        # AI tutor (coming soon)
 ├── pages/            # Route components (thin wrappers)
-├── shared/           # Shared components, utilities, types
+├── shared/           # UI components, utilities, types
 └── App.tsx           # Router configuration
 ```
 
