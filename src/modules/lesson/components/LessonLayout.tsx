@@ -4,17 +4,19 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Skeleton } from '@/shared/components/ui/skeleton'
 import { EditorPanel } from '@/modules/editor'
+import { Header } from '@/modules/layout'
+import { useIdentity } from '@/modules/auth'
 import { useLesson } from '../hooks/useLesson'
 import { useProgress } from '../hooks/useProgress'
 import { LessonContent } from './LessonContent'
 import { ExercisePanel } from './ExercisePanel'
-import logo from '@/assets/logo.png'
 
 interface LessonLayoutProps {
   slug: string
 }
 
 export function LessonLayout({ slug }: LessonLayoutProps) {
+  const { type } = useIdentity()
   const { lesson, module, loading, error } = useLesson(slug)
   const { startLesson, completeLesson, getStatus } = useProgress()
 
@@ -63,53 +65,74 @@ export function LessonLayout({ slug }: LessonLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b px-6 py-3 flex items-center gap-4">
-        <Link to="/learn" className="flex items-center gap-1 shrink-0">
-          <img src={logo} alt="AI Coding Tutor" className="h-4 w-auto" />
-        </Link>
-        <div className="h-6 w-px bg-border" />
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/learn">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Link>
-        </Button>
-        <div>
-          {module && (
-            <p className="text-xs text-muted-foreground">{module.title}</p>
-          )}
-          <h1 className="font-semibold">{lesson.title}</h1>
-        </div>
-      </header>
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Header - fixed */}
+      <Header />
 
       {/* Main content */}
-      <div className="flex-1 flex">
-        {/* Left panel: Lesson content */}
-        <div className="flex-1 p-6 border-r overflow-y-auto">
-          <LessonContent content={lesson.content} />
-
-          {/* Exercise description below content */}
-          {lesson.exercise && (
-            <div className="mt-8">
-              <ExercisePanel exercise={lesson.exercise} />
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left panel: Lesson content - scrollable */}
+        <div className="flex-1 border-r overflow-y-auto">
+          {/* Lesson title bar */}
+          <div className="sticky top-0 bg-background border-b px-6 py-3 flex items-center gap-4">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/learn">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Link>
+            </Button>
+            <div>
+              {module && (
+                <p className="text-xs text-muted-foreground">{module.title}</p>
+              )}
+              <h1 className="font-semibold">{lesson.title}</h1>
             </div>
-          )}
+          </div>
 
-          {/* Completion indicator */}
-          {isCompleted && (
-            <div className="mt-8 pt-6 border-t">
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="font-medium">Lesson Complete</span>
+          <div className="p-6">
+            <LessonContent content={lesson.content} />
+
+            {/* Exercise description below content */}
+            {lesson.exercise && (
+              <div className="mt-8">
+                <ExercisePanel exercise={lesson.exercise} />
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Completion indicator */}
+            {isCompleted && (
+              <div className="mt-8 pt-6 border-t space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="font-medium">Lesson Complete</span>
+                  </div>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/learn">
+                      <ArrowLeft className="h-4 w-4 mr-1" />
+                      Back to Dashboard
+                    </Link>
+                  </Button>
+                </div>
+
+                {/* Registration prompt for code-based users */}
+                {type === 'code_based' && (
+                  <div className="p-4 bg-muted/50 rounded-lg border">
+                    <p className="text-sm mb-3">
+                      Great progress! Register to skip entering your code and keep your profile active forever.
+                    </p>
+                    <Button asChild size="sm">
+                      <Link to="/register">Register for free</Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Right panel: Code editor */}
-        <div className="flex-1">
+        {/* Right panel: Code editor - fixed, internal scroll only */}
+        <div className="flex-1 overflow-hidden">
           {lesson.exercise ? (
             <EditorPanel
               starterCode={lesson.exercise.starterCode}

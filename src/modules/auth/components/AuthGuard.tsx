@@ -1,13 +1,18 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { Skeleton } from '@/shared/components/ui/skeleton'
-import { useAuth } from '../hooks/useAuth'
+import { useIdentity } from '../hooks/useIdentity'
 
 interface AuthGuardProps {
   children: React.ReactNode
 }
 
+/**
+ * Route guard that requires authentication.
+ * Supports both code-based (anonymous) and registered (Supabase auth) users.
+ * Redirects to landing page if not authenticated.
+ */
 export function AuthGuard({ children }: AuthGuardProps) {
-  const { user, loading } = useAuth()
+  const { isAuthenticated, loading } = useIdentity()
   const location = useLocation()
 
   if (loading) {
@@ -22,8 +27,9 @@ export function AuthGuard({ children }: AuthGuardProps) {
     )
   }
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+  if (!isAuthenticated) {
+    // Redirect to landing page (not login) since users can start without account
+    return <Navigate to="/" state={{ from: location }} replace />
   }
 
   return <>{children}</>

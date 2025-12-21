@@ -2,6 +2,37 @@
 
 > A design document for implementing zero-friction onboarding where learners can start immediately without registration.
 
+## Implementation Status
+
+✅ **Implemented** (All 3 Phases Complete)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Profile creation on "Start Learning" | ✅ | Creates profile with access code, display name, avatar |
+| Access code generation | ✅ | Format: `ADJECTIVE-NOUN-NN` (e.g., SWIFT-BEAR-73) |
+| Code validation & session restore | ✅ | Via localStorage + manual code entry |
+| Progress tracking | ✅ | Uses `useIdentity` hook with `profileId` |
+| Registration upgrade | ✅ | `/register` page links auth user to profile |
+| Shared header with user info | ✅ | Same header across Dashboard and Lessons |
+| Dashboard info banner | ✅ | Shows access code with copy button |
+| Lesson completion prompt | ✅ | Inline registration prompt for code-based users |
+| Database migration | ✅ | `003_frictionless_onboarding.sql` |
+| Cleanup function | ✅ | `cleanup_inactive_profiles()` - needs pg_cron scheduling |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `supabase/migrations/003_frictionless_onboarding.sql` | Schema changes, RLS, cleanup function |
+| `src/modules/auth/lib/access-code.ts` | Code generation utilities |
+| `src/modules/auth/hooks/useAccessCode.ts` | Code-based auth state |
+| `src/modules/auth/hooks/useIdentity.ts` | Unified identity hook |
+| `src/pages/Register.tsx` | Registration upgrade page |
+| `src/pages/Landing.tsx` | Start Learning flow |
+| `src/modules/layout/components/Header.tsx` | Shared header with user menu |
+
+---
+
 ## Core Principle
 
 There are NO "users" unless someone explicitly registers.
@@ -55,7 +86,9 @@ There are NO "users" unless someone explicitly registers.
 ```
 Landing Page
     │
-    ├─ Sees: Curriculum overview, "Start Learning" button
+    ├─ Sees: "Learn JavaScript" headline
+    │        "No sign-up required. Start learning instantly."
+    │        "Start Learning" button
     │
     └─ Clicks "Start Learning"
            │
@@ -66,12 +99,12 @@ Landing Page
            │
            ├─ [Frontend] Store access_code in localStorage
            │
-           ├─ [Frontend] Show brief toast:
-           │     "Your code: SWIFT-BEAR-73 — save it to continue later"
-           │
-           └─ Redirect to first lesson
+           └─ Redirect to Dashboard (/learn)
                   │
-                  └─ Learning begins immediately
+                  └─ Dashboard shows info banner with:
+                       • Access code (with copy button)
+                       • 10-day inactivity warning
+                       • Registration link
 ```
 
 ### Flow 2: Returning Learner (Code-Based)
@@ -204,17 +237,24 @@ If neither (State A):
 
 ```
 ┌─────────────────────────────────────┐
-│  AI Coding Tutor                    │
 │                                     │
-│  Learn JavaScript step by step      │
+│        Learn JavaScript             │
 │                                     │
-│  [Curriculum preview cards...]      │
+│  An adaptive AI tutor that teaches  │
+│  you programming step-by-step.      │
+│                                     │
+│  No sign-up required. Start         │
+│  learning instantly.                │
 │                                     │
 │  ┌─────────────────────────────┐   │
 │  │      Start Learning         │   │
 │  └─────────────────────────────┘   │
 │                                     │
 │  Already learning? Enter your code  │
+│                                     │
+│       Sign In  |  Create Account    │
+│                                     │
+│                        [logo] ──────│
 └─────────────────────────────────────┘
 ```
 
@@ -238,8 +278,8 @@ If neither (State A):
 
 Show **inline** (not modal) prompts at:
 - After completing a lesson (below completion message)
-- On dashboard if using access code for 3+ sessions
-- When entering code on a new device
+  - Message: "Great progress! Register to skip entering your code and keep your profile active forever."
+- On dashboard via the info banner (always visible for code-based users)
 
 Never:
 - During a lesson
@@ -475,10 +515,14 @@ Dormant profiles are deleted after 10 days. Come back before then or register fo
 **2. On the dashboard (for code-based users):**
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ ℹ️  Dormant profiles are deleted after 10 days.                              │
-│    Come back before then or register for permanent access.       [Register] │
+│ ℹ️  Your access code: SWIFT-BEAR-73  [📋]                                    │
+│                                                                              │
+│    Save this code to continue on another device. Inactive profiles are      │
+│    deleted after 10 days. Keep learning to stay active, or register for     │
+│    seamless access.                                                          │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
+Note: The [📋] is a copy button that copies the code to clipboard.
 
 **3. In the header dropdown (for code-based users):**
 ```
@@ -821,23 +865,33 @@ registered, log in with your email."
 
 ## 10. Schema Changes Required
 
-The current `student_profiles` table needs modifications:
+The current `student_profiles` table needs modifications. See `supabase/migrations/003_frictionless_onboarding.sql` for the complete migration.
 
 ```sql
+-- IMPORTANT: Remove FK constraint on id to allow anonymous profiles
+-- The original table has id REFERENCES auth.users(id), which prevents
+-- creating profiles without an auth user
+ALTER TABLE student_profiles
+DROP CONSTRAINT IF EXISTS student_profiles_id_fkey;
+
 -- Add access_code column
 ALTER TABLE student_profiles
 ADD COLUMN access_code TEXT UNIQUE;
 
--- Add index for fast lookups
-CREATE INDEX idx_student_profiles_access_code
-ON student_profiles(access_code);
-
--- Make auth_user_id nullable (for code-based profiles)
--- Note: Check current schema - may already be nullable via FK
+-- Add auth_user_id for linking to auth users (nullable for anonymous)
+ALTER TABLE student_profiles
+ADD COLUMN auth_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 
 -- Add last_active_at for session tracking
 ALTER TABLE student_profiles
 ADD COLUMN last_active_at TIMESTAMPTZ DEFAULT now();
+
+-- Add indexes for fast lookups
+CREATE INDEX idx_student_profiles_access_code
+ON student_profiles(access_code) WHERE access_code IS NOT NULL;
+
+CREATE INDEX idx_student_profiles_auth_user_id
+ON student_profiles(auth_user_id) WHERE auth_user_id IS NOT NULL;
 ```
 
 ### RLS Policy Updates

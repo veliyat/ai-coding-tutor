@@ -39,7 +39,7 @@ export function useStudentProfile() {
       const { data, error } = await supabase
         .from('student_profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('auth_user_id', user.id)
         .single()
 
       if (error) {
@@ -61,7 +61,7 @@ export function useStudentProfile() {
     const { error } = await supabase
       .from('student_profiles')
       .update(updates)
-      .eq('id', user.id)
+      .eq('auth_user_id', user.id)
 
     if (error) {
       return { error: error.message }
@@ -71,7 +71,7 @@ export function useStudentProfile() {
     const { data } = await supabase
       .from('student_profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('auth_user_id', user.id)
       .single()
 
     setState(prev => ({ ...prev, profile: data }))

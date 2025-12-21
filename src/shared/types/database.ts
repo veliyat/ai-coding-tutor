@@ -150,33 +150,42 @@ export type Database = {
       }
       student_profiles: {
         Row: {
+          access_code: string | null
+          auth_user_id: string | null
           avatar_emoji: string | null
           created_at: string | null
           current_skill_level: string | null
           display_name: string | null
           id: string
+          last_active_at: string | null
           learning_goal: string | null
           preferred_style: string | null
           prior_experience: string | null
           updated_at: string | null
         }
         Insert: {
+          access_code?: string | null
+          auth_user_id?: string | null
           avatar_emoji?: string | null
           created_at?: string | null
           current_skill_level?: string | null
           display_name?: string | null
           id: string
+          last_active_at?: string | null
           learning_goal?: string | null
           preferred_style?: string | null
           prior_experience?: string | null
           updated_at?: string | null
         }
         Update: {
+          access_code?: string | null
+          auth_user_id?: string | null
           avatar_emoji?: string | null
           created_at?: string | null
           current_skill_level?: string | null
           display_name?: string | null
           id?: string
+          last_active_at?: string | null
           learning_goal?: string | null
           preferred_style?: string | null
           prior_experience?: string | null
@@ -282,6 +291,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_inactive_profiles: { Args: never; Returns: number }
       get_next_lesson: {
         Args: { p_student_id: string }
         Returns: {

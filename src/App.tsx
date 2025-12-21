@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Landing, Login, Signup, Onboarding, Dashboard, Lesson, Profile } from '@/pages'
 import { AuthGuard, OnboardingGuard } from '@/modules/auth'
 
@@ -10,6 +10,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/register" element={<Navigate to="/signup" replace />} />
 
         {/* Auth required, onboarding not required */}
         <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />

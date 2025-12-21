@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/shared/lib/supabase'
-import { useAuth } from '@/modules/auth'
+import { useIdentity } from '@/modules/auth'
 import type { ProgressRow, ProgressStatus } from '../types'
 
 interface ProgressState {
@@ -10,7 +10,7 @@ interface ProgressState {
 }
 
 export function useProgress() {
-  const { user, loading: authLoading } = useAuth()
+  const { profileId, loading: identityLoading } = useIdentity()
   const [state, setState] = useState<ProgressState>({
     progress: {},
     loading: true,
@@ -18,7 +18,7 @@ export function useProgress() {
   })
 
   const fetchProgress = useCallback(async () => {
-    if (!user) {
+    if (!profileId) {
       setState({ progress: {}, loading: false, error: null })
       return
     }
@@ -26,7 +26,7 @@ export function useProgress() {
     const { data, error } = await supabase
       .from('student_progress')
       .select('*')
-      .eq('student_id', user.id)
+      .eq('student_id', profileId)
 
     if (error) {
       setState({ progress: {}, loading: false, error: error.message })
@@ -42,17 +42,17 @@ export function useProgress() {
     }
 
     setState({ progress: progressMap, loading: false, error: null })
-  }, [user])
+  }, [profileId])
 
   useEffect(() => {
-    if (authLoading) return
+    if (identityLoading) return
     void (async () => {
       await fetchProgress()
     })()
-  }, [authLoading, fetchProgress])
+  }, [identityLoading, fetchProgress])
 
   const startLesson = useCallback(async (lessonId: string): Promise<{ error: string | null }> => {
-    if (!user) return { error: 'Not authenticated' }
+    if (!profileId) return { error: 'Not authenticated' }
 
     const existing = state.progress[lessonId]
     if (existing) {
@@ -61,7 +61,7 @@ export function useProgress() {
     }
 
     const { error } = await supabase.from('student_progress').insert({
-      student_id: user.id,
+      student_id: profileId,
       lesson_id: lessonId,
       status: 'in_progress',
       started_at: new Date().toISOString(),
@@ -71,16 +71,16 @@ export function useProgress() {
 
     await fetchProgress()
     return { error: null }
-  }, [user, state.progress, fetchProgress])
+  }, [profileId, state.progress, fetchProgress])
 
   const completeLesson = useCallback(async (lessonId: string): Promise<{ error: string | null }> => {
-    if (!user) return { error: 'Not authenticated' }
+    if (!profileId) return { error: 'Not authenticated' }
 
     const existing = state.progress[lessonId]
     if (!existing) {
       // Create new completed progress
       const { error } = await supabase.from('student_progress').insert({
-        student_id: user.id,
+        student_id: profileId,
         lesson_id: lessonId,
         status: 'completed',
         started_at: new Date().toISOString(),
@@ -101,7 +101,7 @@ export function useProgress() {
 
     await fetchProgress()
     return { error: null }
-  }, [user, state.progress, fetchProgress])
+  }, [profileId, state.progress, fetchProgress])
 
   const getStatus = useCallback((lessonId: string): ProgressStatus => {
     const row = state.progress[lessonId]
@@ -111,7 +111,7 @@ export function useProgress() {
 
   return {
     progress: state.progress,
-    loading: state.loading || authLoading,
+    loading: state.loading || identityLoading,
     error: state.error,
     startLesson,
     completeLesson,

@@ -1,22 +1,146 @@
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { useIdentity, useAccessCode } from '@/modules/auth'
 import logo from '@/assets/logo.png'
 
 export function Landing() {
+  const navigate = useNavigate()
+  const { isAuthenticated, loading } = useIdentity()
+  const { createProfile, validateCode } = useAccessCode()
+
+  const [showCodeInput, setShowCodeInput] = useState(false)
+  const [codeInput, setCodeInput] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
+  const [isValidating, setIsValidating] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+
+  // Auto-redirect if already authenticated
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate('/learn')
+    }
+  }, [loading, isAuthenticated, navigate])
+
+  async function handleStartLearning() {
+    setIsCreating(true)
+    setMessage(null)
+    const { error } = await createProfile()
+    setIsCreating(false)
+
+    if (error) {
+      setMessage({ type: 'error', text: error })
+      return
+    }
+
+    navigate('/learn')
+  }
+
+  async function handleCodeSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!codeInput.trim()) return
+
+    setIsValidating(true)
+    setMessage(null)
+    const valid = await validateCode(codeInput)
+    setIsValidating(false)
+
+    if (valid) {
+      navigate('/learn')
+    } else {
+      setMessage({
+        type: 'error',
+        text: 'This code is not recognized. It may have expired or been entered incorrectly.',
+      })
+    }
+  }
+
+  // Don't render until we know auth state
+  if (loading) {
+    return null
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
       <h1 className="text-4xl font-bold mb-4">Learn JavaScript</h1>
-      <p className="text-muted-foreground mb-8 text-center max-w-md">
+      <p className="text-muted-foreground mb-2 text-center max-w-md">
         An adaptive AI tutor that teaches you programming step-by-step.
       </p>
-      <div className="flex gap-4">
-        <Button asChild>
-          <Link to="/signup">Get Started</Link>
+      <p className="text-sm text-muted-foreground mb-8">
+        No sign-up required. Start learning for free.
+      </p>
+
+      <div className="flex flex-col gap-4 w-full max-w-xs">
+        {/* Primary action: Start Learning */}
+        <Button
+          onClick={handleStartLearning}
+          disabled={isCreating}
+          size="lg"
+          className="w-full cursor-pointer"
+        >
+          {isCreating ? 'Starting...' : 'Start Learning'}
         </Button>
-        <Button variant="outline" asChild>
-          <Link to="/login">Sign In</Link>
-        </Button>
+
+        {/* Code entry toggle/form */}
+        {!showCodeInput ? (
+          <button
+            onClick={() => setShowCodeInput(true)}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+          >
+            Already learning? Enter your code
+          </button>
+        ) : (
+          <form onSubmit={handleCodeSubmit} className="space-y-2">
+            <Input
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+              placeholder="SWIFT-BEAR-73"
+              className="text-center uppercase"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                variant="outline"
+                className="flex-1"
+                disabled={isValidating || !codeInput.trim()}
+              >
+                {isValidating ? 'Checking...' : 'Continue'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setShowCodeInput(false)
+                  setCodeInput('')
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* Error/success message */}
+        {message && (
+          <p className={`text-sm text-center ${message.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
+            {message.text}
+          </p>
+        )}
+
+        {/* Secondary: Sign In / Create Account */}
+        <div className="flex gap-2 justify-center text-sm text-muted-foreground pt-4">
+          <Link to="/login" className="hover:text-foreground hover:underline">
+            Sign In
+          </Link>
+          <span>|</span>
+          <Link to="/signup" className="hover:text-foreground hover:underline">
+            Create Account
+          </Link>
+        </div>
       </div>
+
       <img src={logo} alt="AI Coding Tutor" className="h-5 w-auto absolute bottom-4 right-4" />
     </div>
   )

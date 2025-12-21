@@ -1,13 +1,22 @@
 import { Navigate } from 'react-router-dom'
 import { Skeleton } from '@/shared/components/ui/skeleton'
+import { useIdentity } from '../hooks/useIdentity'
 import { useStudentProfile } from '../hooks/useStudentProfile'
 
 interface OnboardingGuardProps {
   children: React.ReactNode
 }
 
+/**
+ * Route guard that ensures onboarding is complete.
+ * - Code-based users skip onboarding (they get default values)
+ * - Registered users must complete onboarding
+ */
 export function OnboardingGuard({ children }: OnboardingGuardProps) {
-  const { isOnboardingComplete, loading } = useStudentProfile()
+  const { type, loading: identityLoading } = useIdentity()
+  const { isOnboardingComplete, loading: profileLoading } = useStudentProfile()
+
+  const loading = identityLoading || (type === 'registered' && profileLoading)
 
   if (loading) {
     return (
@@ -21,7 +30,14 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
     )
   }
 
-  if (!isOnboardingComplete) {
+  // Code-based users skip traditional onboarding
+  // They already have a display name, avatar, and can start learning immediately
+  if (type === 'code_based') {
+    return <>{children}</>
+  }
+
+  // Registered users need to complete onboarding
+  if (type === 'registered' && !isOnboardingComplete) {
     return <Navigate to="/onboarding" replace />
   }
 

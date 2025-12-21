@@ -39,12 +39,12 @@ export function useAuth() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = useCallback(async (email: string, password: string): Promise<{ error: AuthError | null }> => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
-    return { error }
+    return { data, error }
   }, [])
 
   const signIn = useCallback(async (email: string, password: string): Promise<{ error: AuthError | null }> => {
@@ -67,6 +67,13 @@ export function useAuth() {
     return { error }
   }, [])
 
+  const updateEmail = useCallback(async (newEmail: string): Promise<{ error: AuthError | null }> => {
+    const { error } = await supabase.auth.updateUser({
+      email: newEmail,
+    })
+    return { error }
+  }, [])
+
   return {
     user: state.user,
     session: state.session,
@@ -75,5 +82,6 @@ export function useAuth() {
     signIn,
     signOut,
     updatePassword,
+    updateEmail,
   }
 }
