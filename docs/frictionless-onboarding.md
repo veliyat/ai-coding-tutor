@@ -17,7 +17,7 @@
 | Dashboard info banner | ✅ | Shows access code with copy button |
 | Lesson completion prompt | ✅ | Inline registration prompt for code-based users |
 | Database migration | ✅ | `003_frictionless_onboarding.sql` |
-| Cleanup function | ✅ | `cleanup_inactive_profiles()` - needs pg_cron scheduling |
+| Cleanup function | ✅ | `cleanup_inactive_profiles()` scheduled via pg_cron |
 
 ### Key Files
 
