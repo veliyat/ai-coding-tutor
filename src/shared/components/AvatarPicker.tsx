@@ -1,5 +1,5 @@
 import { cn } from '@/shared/lib/utils'
-import { AVATAR_EMOJIS } from './Avatar'
+import { AVATAR_EMOJIS } from './avatar-emojis'
 
 interface AvatarPickerProps {
   value: string

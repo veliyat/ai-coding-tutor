@@ -27,19 +27,19 @@ export function useStudentProfile() {
       return
     }
 
-    // No user after auth loaded = not authenticated
-    if (!user) {
-      setState({ profile: null, loading: false, error: null })
-      return
-    }
-
     async function fetchProfile() {
-      logger.log('Fetching profile for user:', user!.id)
+      // No user after auth loaded = not authenticated
+      if (!user) {
+        setState({ profile: null, loading: false, error: null })
+        return
+      }
+
+      logger.log('Fetching profile for user:', user.id)
 
       const { data, error } = await supabase
         .from('student_profiles')
         .select('*')
-        .eq('id', user!.id)
+        .eq('id', user.id)
         .single()
 
       if (error) {

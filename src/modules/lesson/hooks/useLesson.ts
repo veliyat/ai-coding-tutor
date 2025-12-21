@@ -18,18 +18,16 @@ export function useLesson(slug: string | undefined) {
   })
 
   useEffect(() => {
-    if (!slug) {
-      setState({ lesson: null, module: null, loading: false, error: 'No lesson slug provided' })
-      return
-    }
-
-    const currentSlug = slug // Capture for closure
-
     async function fetchLesson() {
+      if (!slug) {
+        setState({ lesson: null, module: null, loading: false, error: 'No lesson slug provided' })
+        return
+      }
+
       const { data, error } = await supabase
         .from('lessons')
         .select('*')
-        .eq('slug', currentSlug)
+        .eq('slug', slug)
         .single()
 
       if (error) {

@@ -46,7 +46,9 @@ export function useProgress() {
 
   useEffect(() => {
     if (authLoading) return
-    fetchProgress()
+    void (async () => {
+      await fetchProgress()
+    })()
   }, [authLoading, fetchProgress])
 
   const startLesson = useCallback(async (lessonId: string): Promise<{ error: string | null }> => {
