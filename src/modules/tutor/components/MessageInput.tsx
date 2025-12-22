@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
 import { Send } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Textarea } from '@/shared/components/ui/textarea'
@@ -15,6 +15,14 @@ export function MessageInput({
   placeholder = 'Ask a question...',
 }: MessageInputProps) {
   const [value, setValue] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Focus input when response arrives (disabled goes from true to false)
+  useEffect(() => {
+    if (!disabled) {
+      textareaRef.current?.focus()
+    }
+  }, [disabled])
 
   const handleSubmit = () => {
     const trimmed = value.trim()
@@ -36,6 +44,7 @@ export function MessageInput({
     <div className="border-t p-3">
       <div className="flex gap-2">
         <Textarea
+          ref={textareaRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
