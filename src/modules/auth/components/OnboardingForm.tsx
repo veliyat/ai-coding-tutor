@@ -37,10 +37,10 @@ const onboardingSchema = z.object({
   avatar: z.string().min(1, 'Please choose an avatar'),
   goal: z.string().min(1, 'Please select a goal'),
   experience: z.enum(['none', 'some', 'other_language'], {
-    required_error: 'Please select your experience level',
+    message: 'Please select your experience level',
   }),
   style: z.enum(['examples', 'analogies', 'theory'], {
-    required_error: 'Please select a learning style',
+    message: 'Please select a learning style',
   }),
 })
 
