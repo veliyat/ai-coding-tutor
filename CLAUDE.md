@@ -197,3 +197,10 @@ VITE_SUPABASE_ANON_KEY=xxx
 - Linear lesson flow (no branching)
 - Desktop-first (no mobile optimization)
 - No gamification, social features, or user-generated content
+
+## Documentation
+- `docs/ONBOARDING.md` — Getting started guide
+- `docs/TESTING.md` — Testing strategy and TDD approach
+- `docs/FRICTIONLESS_ONBOARDING.md` — Access code system design
+- `docs/FUTURE_ENHANCEMENTS.md` — Roadmap and planned features
+- `docs/SCAFFOLD_PROMPT.md` — Reusable project scaffold template

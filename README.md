@@ -93,6 +93,10 @@ src/
 
 - [Onboarding Guide](./docs/ONBOARDING.md) — Get started in under 15 minutes
 - [Architecture](./CLAUDE.md) — Detailed project structure and conventions
+- [Testing Guide](./docs/TESTING.md) — Testing strategy and TDD approach
+- [Frictionless Onboarding](./docs/FRICTIONLESS_ONBOARDING.md) — Access code system design
+- [Future Enhancements](./docs/FUTURE_ENHANCEMENTS.md) — Roadmap and planned features
+- [Scaffold Prompt](./docs/SCAFFOLD_PROMPT.md) — Reusable project scaffold template
 
 ## Scripts
 
