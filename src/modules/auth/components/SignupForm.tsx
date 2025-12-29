@@ -1,10 +1,26 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
-import { Label } from '@/shared/components/ui/label'
+import { FormField } from '@/shared/components/ui/form-field'
 import { supabase } from '@/shared/lib/supabase'
 import { useAccessCode } from '../hooks/useAccessCode'
+
+const signupSchema = z
+  .object({
+    fullName: z.string().min(2, 'Please enter your full name (at least 2 characters)'),
+    email: z.string().email('Please enter a valid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
+type SignupFormData = z.infer<typeof signupSchema>
 
 interface SignupFormProps {
   onPendingConfirmation?: (email: string) => void
@@ -14,50 +30,33 @@ export function SignupForm({ onPendingConfirmation }: SignupFormProps) {
   const navigate = useNavigate()
   const { accessCode, profile, clearAccessCode } = useAccessCode()
   const profileId = profile?.id
-
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
 
   const isUpgrade = Boolean(accessCode && profileId)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+  })
 
-    // Validation
-    if (!fullName.trim() || fullName.trim().length < 2) {
-      setError('Please enter your full name (at least 2 characters)')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
-    }
-
-    setLoading(true)
+  async function onSubmit(data: SignupFormData) {
+    setServerError(null)
 
     try {
       // 1. Create Supabase auth user
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
       })
 
       if (signUpError) {
         throw signUpError
       }
 
-      if (!data.user) {
+      if (!authData.user) {
         throw new Error('Failed to create account')
       }
 
@@ -70,8 +69,8 @@ export function SignupForm({ onPendingConfirmation }: SignupFormProps) {
           {
             p_profile_id: profileId,
             p_access_code: accessCode,
-            p_auth_user_id: data.user.id,
-            p_display_name: fullName.trim(),
+            p_auth_user_id: authData.user.id,
+            p_display_name: data.fullName.trim(),
           }
         )
 
@@ -85,9 +84,9 @@ export function SignupForm({ onPendingConfirmation }: SignupFormProps) {
       } else {
         // Create new profile for direct signup
         const { error: profileError } = await supabase.from('student_profiles').insert({
-          id: data.user.id,
-          auth_user_id: data.user.id,
-          display_name: fullName.trim(),
+          id: authData.user.id,
+          auth_user_id: authData.user.id,
+          display_name: data.fullName.trim(),
         })
 
         if (profileError) {
@@ -96,7 +95,7 @@ export function SignupForm({ onPendingConfirmation }: SignupFormProps) {
       }
 
       // 3. Handle post-signup navigation
-      if (data.session) {
+      if (authData.session) {
         // User is immediately authenticated (email confirmation disabled)
         if (isUpgrade) {
           clearAccessCode()
@@ -105,7 +104,7 @@ export function SignupForm({ onPendingConfirmation }: SignupFormProps) {
       } else {
         // Email confirmation required
         if (onPendingConfirmation) {
-          onPendingConfirmation(email)
+          onPendingConfirmation(data.email)
         } else {
           // Default behavior: still navigate but they'll need to confirm
           navigate('/learn')
@@ -114,64 +113,46 @@ export function SignupForm({ onPendingConfirmation }: SignupFormProps) {
     } catch (err) {
       console.error('Signup error:', err)
       const message = err instanceof Error ? err.message : 'Registration failed'
-      setError(message)
-    } finally {
-      setLoading(false)
+      setServerError(message)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="fullName">Full Name</Label>
-        <Input
-          id="fullName"
-          type="text"
-          placeholder="Alice Chen"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-        />
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      <FormField
+        label="Full Name"
+        type="text"
+        placeholder="Alice Chen"
+        error={errors.fullName?.message}
+        {...register('fullName')}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
+      <FormField
+        label="Email"
+        type="email"
+        placeholder="you@example.com"
+        error={errors.email?.message}
+        {...register('email')}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="At least 6 characters"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
+      <FormField
+        label="Password"
+        type="password"
+        placeholder="At least 6 characters"
+        error={errors.password?.message}
+        {...register('password')}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          placeholder="Confirm your password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
-      </div>
+      <FormField
+        label="Confirm Password"
+        type="password"
+        placeholder="Confirm your password"
+        error={errors.confirmPassword?.message}
+        {...register('confirmPassword')}
+      />
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
+      {serverError && (
+        <p className="text-xs text-destructive">{serverError}</p>
       )}
 
       {isUpgrade && (
@@ -180,8 +161,8 @@ export function SignupForm({ onPendingConfirmation }: SignupFormProps) {
         </p>
       )}
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Creating account...' : 'Create Account'}
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? 'Creating account...' : 'Create Account'}
       </Button>
     </form>
   )

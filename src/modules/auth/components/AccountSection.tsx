@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
+import { FormField } from '@/shared/components/ui/form-field'
 import { Label } from '@/shared/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import type { AuthError } from '@supabase/supabase-js'
@@ -12,48 +15,52 @@ interface AccountSectionProps {
 
 export function AccountSection({ email, onUpdateEmail }: AccountSectionProps) {
   const [editing, setEditing] = useState(false)
-  const [newEmail, setNewEmail] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [serverError, setServerError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
+  const emailSchema = z.object({
+    newEmail: z
+      .string()
+      .email('Please enter a valid email address')
+      .refine((val) => val !== email, 'New email must be different from current email'),
+  })
+
+  type EmailFormData = z.infer<typeof emailSchema>
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    getValues,
+    formState: { errors, isSubmitting },
+  } = useForm<EmailFormData>({
+    resolver: zodResolver(emailSchema),
+  })
+
+  async function onSubmit(data: EmailFormData) {
+    setServerError(null)
     setSuccess(false)
 
-    if (!newEmail.trim()) {
-      setError('Please enter an email address')
-      return
-    }
-
-    if (newEmail === email) {
-      setError('New email must be different from current email')
-      return
-    }
-
-    setSaving(true)
-    const { error: updateError } = await onUpdateEmail(newEmail)
-    setSaving(false)
+    const { error: updateError } = await onUpdateEmail(data.newEmail)
 
     if (updateError) {
-      setError(updateError.message)
+      setServerError(updateError.message)
     } else {
       setSuccess(true)
     }
   }
 
   function startEditing() {
-    setNewEmail('')
-    setError('')
+    reset({ newEmail: '' })
+    setServerError(null)
     setSuccess(false)
     setEditing(true)
   }
 
   function cancelEditing() {
     setEditing(false)
-    setNewEmail('')
-    setError('')
+    reset()
+    setServerError(null)
     setSuccess(false)
   }
 
@@ -69,7 +76,7 @@ export function AccountSection({ email, onUpdateEmail }: AccountSectionProps) {
           success ? (
             <div className="space-y-3">
               <p className="text-sm text-green-600">
-                A confirmation link has been sent to <span className="font-medium">{newEmail}</span>.
+                A confirmation link has been sent to <span className="font-medium">{getValues('newEmail')}</span>.
                 Check your inbox to confirm the change.
               </p>
               <Button variant="outline" size="sm" onClick={cancelEditing}>
@@ -77,31 +84,30 @@ export function AccountSection({ email, onUpdateEmail }: AccountSectionProps) {
               </Button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
               <div className="text-sm text-muted-foreground mb-2">
                 Current: {email}
               </div>
-              <Input
+              <FormField
                 type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="New email address"
-                disabled={saving}
+                disabled={isSubmitting}
+                error={errors.newEmail?.message || serverError || undefined}
+                {...register('newEmail')}
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
               <p className="text-xs text-muted-foreground">
                 You will receive a confirmation email at the new address.
               </p>
               <div className="flex gap-2">
-                <Button type="submit" size="sm" disabled={saving}>
-                  {saving ? 'Sending...' : 'Send Confirmation'}
+                <Button type="submit" size="sm" disabled={isSubmitting}>
+                  {isSubmitting ? 'Sending...' : 'Send Confirmation'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={cancelEditing}
-                  disabled={saving}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>

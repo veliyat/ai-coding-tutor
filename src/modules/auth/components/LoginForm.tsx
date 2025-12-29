@@ -1,28 +1,39 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
-import { Label } from '@/shared/components/ui/label'
+import { FormField } from '@/shared/components/ui/form-field'
 import { useAuth } from '../hooks/useAuth'
+
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+})
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 export function LoginForm() {
   const navigate = useNavigate()
   const { signIn } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  })
 
-    const { error } = await signIn(email, password)
+  async function onSubmit(data: LoginFormData) {
+    setServerError(null)
+
+    const { error } = await signIn(data.email, data.password)
 
     if (error) {
-      setError(error.message)
-      setLoading(false)
+      setServerError(error.message)
       return
     }
 
@@ -30,37 +41,29 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      <FormField
+        label="Email"
+        type="email"
+        placeholder="you@example.com"
+        error={errors.email?.message}
+        {...register('email')}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
+      <FormField
+        label="Password"
+        type="password"
+        placeholder="••••••••"
+        error={errors.password?.message}
+        {...register('password')}
+      />
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
+      {serverError && (
+        <p className="text-xs text-destructive">{serverError}</p>
       )}
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Signing in...' : 'Sign In'}
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? 'Signing in...' : 'Sign In'}
       </Button>
     </form>
   )

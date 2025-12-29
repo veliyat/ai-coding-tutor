@@ -16,6 +16,7 @@ export default defineConfig({
       exclude: [
         'node_modules/',
         'src/test/',
+        'src/shared/components/ui/**',
         '**/*.d.ts',
         '**/*.config.*',
         '**/index.ts',

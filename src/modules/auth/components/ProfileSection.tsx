@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
+import { FormField } from '@/shared/components/ui/form-field'
 import { Label } from '@/shared/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Avatar } from '@/shared/components/Avatar'
@@ -9,6 +12,12 @@ import type { Tables, TablesUpdate } from '@/shared/types/database'
 
 type StudentProfile = Tables<'student_profiles'>
 type StudentProfileUpdate = TablesUpdate<'student_profiles'>
+
+const displayNameSchema = z.object({
+  displayName: z.string().min(2, 'Name must be at least 2 characters'),
+})
+
+type DisplayNameFormData = z.infer<typeof displayNameSchema>
 
 interface ProfileSectionProps {
   profile: StudentProfile | null
@@ -19,12 +28,18 @@ interface ProfileSectionProps {
 export function ProfileSection({ profile, isRegistered, onUpdate }: ProfileSectionProps) {
   const [editingAvatar, setEditingAvatar] = useState(false)
   const [savingAvatar, setSavingAvatar] = useState(false)
-
   const [editingName, setEditingName] = useState(false)
-  const [displayName, setDisplayName] = useState('')
-  const [savingName, setSavingName] = useState(false)
-  const [nameError, setNameError] = useState('')
+  const [serverError, setServerError] = useState<string | null>(null)
   const [nameSuccess, setNameSuccess] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<DisplayNameFormData>({
+    resolver: zodResolver(displayNameSchema),
+  })
 
   async function handleAvatarChange(emoji: string) {
     setSavingAvatar(true)
@@ -33,22 +48,14 @@ export function ProfileSection({ profile, isRegistered, onUpdate }: ProfileSecti
     setEditingAvatar(false)
   }
 
-  async function handleNameSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setNameError('')
+  async function onSubmit(data: DisplayNameFormData) {
+    setServerError(null)
     setNameSuccess(false)
 
-    if (!displayName.trim() || displayName.trim().length < 2) {
-      setNameError('Name must be at least 2 characters')
-      return
-    }
-
-    setSavingName(true)
-    const { error } = await onUpdate({ display_name: displayName.trim() })
-    setSavingName(false)
+    const { error } = await onUpdate({ display_name: data.displayName.trim() })
 
     if (error) {
-      setNameError(error)
+      setServerError(error)
     } else {
       setNameSuccess(true)
       setTimeout(() => {
@@ -59,16 +66,16 @@ export function ProfileSection({ profile, isRegistered, onUpdate }: ProfileSecti
   }
 
   function startEditingName() {
-    setDisplayName(profile?.display_name || '')
-    setNameError('')
+    reset({ displayName: profile?.display_name || '' })
+    setServerError(null)
     setNameSuccess(false)
     setEditingName(true)
   }
 
   function cancelEditingName() {
     setEditingName(false)
-    setDisplayName('')
-    setNameError('')
+    reset()
+    setServerError(null)
   }
 
   return (
@@ -111,25 +118,24 @@ export function ProfileSection({ profile, isRegistered, onUpdate }: ProfileSecti
           <div>
             <Label className="text-sm font-medium mb-2 block">Display Name</Label>
             {editingName ? (
-              <form onSubmit={handleNameSubmit} className="space-y-3">
-                <Input
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+                <FormField
                   placeholder="Your name"
-                  disabled={savingName || nameSuccess}
+                  disabled={isSubmitting || nameSuccess}
+                  error={errors.displayName?.message || serverError || undefined}
+                  {...register('displayName')}
                 />
-                {nameError && <p className="text-sm text-destructive">{nameError}</p>}
-                {nameSuccess && <p className="text-sm text-green-600">Name updated!</p>}
+                {nameSuccess && <p className="text-xs text-green-600">Name updated!</p>}
                 <div className="flex gap-2">
-                  <Button type="submit" size="sm" disabled={savingName || nameSuccess}>
-                    {savingName ? 'Saving...' : 'Save'}
+                  <Button type="submit" size="sm" disabled={isSubmitting || nameSuccess}>
+                    {isSubmitting ? 'Saving...' : 'Save'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={cancelEditingName}
-                    disabled={savingName}
+                    disabled={isSubmitting}
                   >
                     Cancel
                   </Button>
