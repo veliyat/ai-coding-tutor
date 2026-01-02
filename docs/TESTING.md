@@ -15,52 +15,60 @@ A pragmatic approach to test-driven development for this project.
 
 ---
 
+## The Testing Pyramid
+
+```
+                    ┌─────────┐
+                   /   E2E    \           Few, Slow, Expensive
+                  /  (5-10%)   \          • Critical user journeys
+                 /──────────────\         • Cross-page navigation
+                /  Integration   \
+               /    (15-25%)      \       Some, Medium Speed
+              /────────────────────\      • Hook interactions
+             /        Unit          \     • Service contracts
+            /       (65-80%)         \
+           /──────────────────────────\   Many, Fast, Cheap
+                                          • Pure functions
+                                          • Business logic
+                                          • Utilities
+```
+
+| Layer | Scope | Speed | Isolation |
+|-------|-------|-------|-----------|
+| **Unit** | Single function/component | < 10ms | Full mocking |
+| **Integration** | Multiple units together | < 500ms | Partial mocking |
+| **E2E** | Full application flow | < 30s | No mocking |
+
+---
+
 ## Coverage Targets
 
-### Benchmarks
+### Current Thresholds (CI Gate)
 
-| Metric | Minimum | Target | Stretch |
-|--------|---------|--------|---------|
-| **Line Coverage** | 60% | 80% | 90% |
-| **Branch Coverage** | 50% | 70% | 85% |
-| **Function Coverage** | 70% | 85% | 95% |
-| **Statement Coverage** | 60% | 80% | 90% |
+| Metric | Minimum | Current | Status |
+|--------|---------|---------|--------|
+| **Line Coverage** | 60% | 65% | ✅ |
+| **Branch Coverage** | 50% | 89% | ✅ |
+| **Function Coverage** | 70% | 72% | ✅ |
+| **Statement Coverage** | 60% | 65% | ✅ |
 
 ### Coverage by Module Priority
 
-| Priority | Module | Target Coverage |
-|----------|--------|-----------------|
-| **Critical** | `editor/lib/` (sandbox) | 90%+ |
-| **Critical** | `auth/lib/` (access-code) | 90%+ |
-| **High** | `tutor/hooks/` | 80%+ |
-| **High** | `lesson/hooks/` | 80%+ |
-| **Medium** | `auth/hooks/` | 70%+ |
-| **Medium** | `auth/components/` | 60%+ |
-| **Lower** | `layout/components/` | 50%+ |
-| **Lower** | UI components (presentational) | 40%+ |
+| Priority | Module | Target | Reason |
+|----------|--------|--------|--------|
+| **Critical** | `editor/lib/sandbox.ts` | 90%+ | Security-critical code execution |
+| **Critical** | `auth/lib/access-code.ts` | 90%+ | Code generation/validation |
+| **High** | `tutor/hooks/` | 80%+ | Complex state orchestration |
+| **High** | `lesson/hooks/` | 80%+ | Progress tracking logic |
+| **Medium** | `auth/hooks/` | 70%+ | Integration with Supabase |
+| **Medium** | `auth/components/` | 60%+ | Form handling and validation |
+| **Lower** | `layout/components/` | 50%+ | Mostly presentational |
+| **Lower** | UI components | 40%+ | Visual, changes often |
 
-### Why These Numbers?
-
-- **90%+ for critical paths**: Code execution (`sandbox.ts`) and authentication (`access-code.ts`) are security-sensitive. High coverage catches edge cases.
-- **80% for business logic**: Hooks contain core application logic. Most branches should be tested.
-- **60-70% for integrations**: Auth and API calls have external dependencies. Test happy paths and key error states.
-- **40-50% for UI**: Presentational components change often. Test interactions, not visuals.
-
-### Coverage Commands
-
-```bash
-# Generate coverage report
-npm run test:coverage
-
-# View HTML report
-open coverage/index.html
-```
-
-### CI Enforcement
-
-Coverage thresholds in `vitest.config.ts`:
+### Coverage Configuration
 
 ```typescript
+// vitest.config.ts
 coverage: {
   provider: 'v8',
   thresholds: {
@@ -90,13 +98,36 @@ supabase start
 npm run test:e2e          # Headless
 npm run test:e2e:ui       # Playwright UI
 npm run test:e2e:headed   # Watch browser
+
+# Coverage report
+npm run test:coverage
+open coverage/index.html  # View HTML report
 ```
 
 ---
 
-## TDD Approach
+## TDD Workflow
 
-### When to Write Tests First (Strict TDD)
+### The Red-Green-Refactor Cycle
+
+```
+┌────────────────────────────────────────────────────────┐
+│                                                        │
+│   1. RED          2. GREEN        3. REFACTOR         │
+│   ─────────       ──────────      ────────────        │
+│   Write a         Write the       Improve code        │
+│   failing         minimum code    quality while       │
+│   test first      to pass         keeping tests       │
+│                                   green               │
+│                                                        │
+│   ┌───┐           ┌───┐           ┌───┐               │
+│   │ ✗ │ ────────► │ ✓ │ ────────► │ ✓ │ ───► repeat  │
+│   └───┘           └───┘           └───┘               │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+```
+
+### When to Write Tests First (TDD)
 
 | Area | Examples | Why TDD Works |
 |------|----------|---------------|
@@ -105,32 +136,14 @@ npm run test:e2e:headed   # Watch browser
 | **Service layers** | `tutor-service.ts` | Request/response contracts |
 | **Bug fixes** | Any bug | Reproduce with failing test, then fix |
 
-**Workflow:**
-```
-1. Write failing test that describes expected behavior
-2. Run test → confirm it fails
-3. Write minimal code to pass
-4. Run test → confirm it passes
-5. Refactor if needed
-6. Repeat
-```
-
-### When to Write Tests After (Test-After)
+### When to Write Tests After
 
 | Area | Examples | Why Test-After Works |
 |------|----------|----------------------|
-| **UI components** | `MessageBubble.tsx`, `LessonContent.tsx` | Build visually first, then test interactions |
+| **UI components** | `MessageBubble.tsx`, `LessonContent.tsx` | Build visually first, test interactions after |
 | **Layouts/styling** | `LessonLayout.tsx`, `Header.tsx` | No meaningful tests to write upfront |
 | **Exploratory work** | New features with unclear requirements | Prototype first, test once API stabilizes |
 | **E2E flows** | `auth.spec.ts`, `lesson-flow.spec.ts` | Write after feature is working |
-
-**Workflow:**
-```
-1. Build the component/feature
-2. Verify it works manually
-3. Write tests for critical interactions
-4. Write tests for edge cases
-```
 
 ---
 
@@ -209,6 +222,34 @@ e2e/                               ← E2E tests (separate)
 
 ## Writing Good Tests
 
+### The FIRST Principles
+
+| Principle | Description |
+|-----------|-------------|
+| **F**ast | Tests should run in milliseconds |
+| **I**ndependent | Tests shouldn't depend on each other |
+| **R**epeatable | Same result every time, any environment |
+| **S**elf-validating | Pass or fail, no manual interpretation |
+| **T**imely | Written before or with the code |
+
+### AAA Pattern (Arrange-Act-Assert)
+
+```typescript
+it('should validate access code format', () => {
+  // Arrange - Set up test data
+  const validCode = 'SWIFT-BEAR-73'
+  const invalidCode = 'invalid'
+
+  // Act - Execute the code under test
+  const validResult = isValidAccessCodeFormat(validCode)
+  const invalidResult = isValidAccessCodeFormat(invalidCode)
+
+  // Assert - Verify the result
+  expect(validResult).toBe(true)
+  expect(invalidResult).toBe(false)
+})
+```
+
 ### Naming Convention
 
 ```typescript
@@ -219,30 +260,18 @@ describe('moduleName', () => {
     })
   })
 })
-```
 
-### AAA Pattern
-
-```typescript
-it('should validate access code format', () => {
-  // Arrange
-  const validCode = 'SWIFT-BEAR-73'
-  const invalidCode = 'invalid'
-
-  // Act
-  const validResult = isValidAccessCodeFormat(validCode)
-  const invalidResult = isValidAccessCodeFormat(invalidCode)
-
-  // Assert
-  expect(validResult).toBe(true)
-  expect(invalidResult).toBe(false)
-})
+// Naming formulas:
+// it('[does something] when [condition]')
+// it('[expected behavior] given [input/state]')
+// it('returns [output] for [input]')
+// it('throws [error] when [condition]')
 ```
 
 ### Testing Hooks
 
 ```typescript
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 
 it('should increment counter', () => {
   const { result } = renderHook(() => useCounter())
@@ -253,16 +282,28 @@ it('should increment counter', () => {
 
   expect(result.current.count).toBe(1)
 })
+
+// For async hooks
+it('should fetch data', async () => {
+  const { result } = renderHook(() => useData())
+
+  await waitFor(() => {
+    expect(result.current.loading).toBe(false)
+  })
+
+  expect(result.current.data).toBeDefined()
+})
 ```
 
 ### Testing Components
 
 ```typescript
-import { renderWithRouter, screen, userEvent } from '@/test/utils/render'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 it('should submit form on button click', async () => {
   const user = userEvent.setup()
-  renderWithRouter(<LoginForm />)
+  render(<LoginForm />)
 
   await user.type(screen.getByLabelText(/email/i), 'test@example.com')
   await user.type(screen.getByLabelText(/password/i), 'password123')
@@ -272,36 +313,86 @@ it('should submit form on button click', async () => {
 })
 ```
 
+### Edge Cases Checklist
+
+Always consider testing:
+
+```typescript
+describe('Edge Cases', () => {
+  // Boundary values
+  it('handles minimum valid value', () => {})
+  it('handles maximum valid value', () => {})
+
+  // Empty/null/undefined
+  it('handles empty string', () => {})
+  it('handles null', () => {})
+  it('handles undefined', () => {})
+
+  // Type coercion
+  it('handles string number "123"', () => {})
+
+  // Special values
+  it('handles NaN', () => {})
+
+  // Collections
+  it('handles empty array', () => {})
+  it('handles single element', () => {})
+})
+```
+
 ---
 
-## Test Priority by Module
+## Mocking Strategy
 
-### High Priority (TDD Required)
+### When to Mock
 
-| Module | File | Reason |
-|--------|------|--------|
-| Editor | `sandbox.ts` | Security-critical code execution |
-| Auth | `access-code.ts` | Code generation/validation |
-| Tutor | `useTutorChat.ts` | Complex state orchestration |
-| Tutor | `useTutorContext.ts` | AI prompt building |
-| Lesson | `useProgress.ts` | Progress calculations |
+| Mock | Don't Mock |
+|------|------------|
+| External APIs (Supabase) | Pure functions |
+| Browser APIs (localStorage) | Utility functions |
+| Time-dependent code | Simple data transformations |
+| Random/non-deterministic | Business logic |
+| Expensive operations | State reducers |
 
-### Medium Priority (Test-After)
+### Test Doubles Reference
 
-| Module | File | Reason |
-|--------|------|--------|
-| Auth | `useAuth.ts` | Integration with Supabase |
-| Lesson | `useLesson.ts` | Data fetching |
-| Tutor | `tutor-service.ts` | Edge Function calls |
+| Type | Purpose | Example |
+|------|---------|---------|
+| **Stub** | Returns canned data | `vi.fn().mockReturnValue(42)` |
+| **Mock** | Verifies interactions | `expect(mock).toHaveBeenCalledWith(x)` |
+| **Spy** | Wraps real implementation | `vi.spyOn(obj, 'method')` |
+| **Fake** | Working implementation | In-memory database |
 
-### Lower Priority (E2E Coverage)
+### Common Mocking Patterns
 
-| Flow | Test |
-|------|------|
-| Landing → Login → Dashboard | `auth.spec.ts` |
-| Code-based access | `auth.spec.ts` |
-| Lesson completion | `lesson-flow.spec.ts` |
-| Tutor interaction | `tutor.spec.ts` |
+```typescript
+// Mocking Supabase
+vi.mock('@/shared/lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockResolvedValue({ data: [], error: null }),
+      insert: vi.fn().mockResolvedValue({ data: { id: '123' }, error: null }),
+    })),
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+    },
+  },
+}))
+
+// Mocking time (for debounce, setTimeout, etc.)
+beforeEach(() => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+// Advancing timers with state updates
+await act(async () => {
+  vi.advanceTimersByTime(2000)
+})
+```
 
 ---
 
@@ -368,4 +459,4 @@ Tests run automatically on every PR:
 
 ---
 
-*Last updated: December 2024*
+*Last updated: January 2025*
