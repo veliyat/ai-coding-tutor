@@ -151,8 +151,11 @@ npm run preview  # Preview production build
 npm run test          # Unit/integration tests (watch mode)
 npm run test:run      # Unit/integration tests (single run)
 npm run test:coverage # With coverage report
-npm run e2e           # E2E tests (all browsers)
+npm run e2e           # E2E tests (all browsers) - uses production Supabase
 npm run e2e:ui        # E2E with Playwright UI
+npm run e2e:local     # E2E tests against LOCAL Supabase (recommended)
+npm run e2e:local:ui  # E2E with UI against local Supabase
+npm run dev:local     # Dev server with local Supabase
 
 # Supabase
 npx supabase login

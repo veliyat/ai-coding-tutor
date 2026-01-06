@@ -45,3 +45,4 @@ supabase/.env.local
 .env.local.back
 .env.local.bak
 supabase/.branches/
+.env.test.local

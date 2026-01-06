@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// Check if we're running against local Supabase
+const isLocalSupabase = process.env.VITE_SUPABASE_URL?.includes('127.0.0.1')
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -30,7 +33,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    // Use dev:local when running against local Supabase, otherwise regular dev
+    command: isLocalSupabase ? 'npm run dev:local' : 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
