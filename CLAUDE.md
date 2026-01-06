@@ -147,6 +147,13 @@ npm run build    # Production build
 npm run lint     # ESLint
 npm run preview  # Preview production build
 
+# Testing
+npm run test          # Unit/integration tests (watch mode)
+npm run test:run      # Unit/integration tests (single run)
+npm run test:coverage # With coverage report
+npm run e2e           # E2E tests (all browsers)
+npm run e2e:ui        # E2E with Playwright UI
+
 # Supabase
 npx supabase login
 npx supabase link --project-ref <PROJECT_ID>

@@ -159,7 +159,8 @@ src/modules/
 │   │   └── access-code.test.ts    ← Unit test
 │   └── hooks/
 │       ├── useAuth.ts
-│       └── useAuth.test.ts        ← Hook test
+│       ├── useAuth.test.ts        ← Hook test
+│       └── auth-integration.test.ts ← Integration test
 ├── editor/
 │   └── lib/
 │       ├── sandbox.ts
@@ -170,9 +171,9 @@ src/modules/
         └── useTutorChat.test.ts
 
 e2e/                               ← E2E tests (separate)
-├── landing.spec.ts
-├── auth.spec.ts
-└── lesson-flow.spec.ts
+├── landing.spec.ts                # Landing page navigation
+├── auth.spec.ts                   # Auth flows (14 tests)
+└── lesson-flow.spec.ts.wip        # Parked for UI changes
 ```
 
 ---
