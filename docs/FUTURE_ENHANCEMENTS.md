@@ -104,7 +104,7 @@ Leverage free tiers of cloud database services to give learners a real terminal-
 - "Choose your path" decision points
 
 ### Gamification
-**Current**: Phase 1 (Data Collection) complete
+**Current**: Phase 2 (XP, Levels, Streaks, Achievements) complete
 **Goal**: Engagement and motivation features
 **Spec**: See `docs/PERSONALIZED_LEARNING.md` for full implementation plan
 
@@ -112,10 +112,13 @@ Leverage free tiers of cloud database services to give learners a real terminal-
 - [x] Event bus architecture for decoupled data flow
 - [x] Exercise attempt persistence to database
 - [x] Database triggers for progress aggregation
-- [ ] XP/points system (Phase 2)
-- [ ] Daily streak counter (Phase 2)
-- [ ] Achievement badges (Phase 2)
+- [x] XP/points system (Phase 2)
+- [x] Daily streak counter (Phase 2)
+- [x] Achievement badges (Phase 2)
 - [ ] Dashboard redesign (Phase 3)
+
+**Known improvements**:
+- [ ] Show achievements immediately from Edge Function response instead of refetching from DB (reduces notification delay)
 
 ### Social Features
 **Current**: None
@@ -682,4 +685,5 @@ When picking up an enhancement:
 *Last updated: January 2026*
 *Testing section expanded: December 2024*
 *Gamification Phase 1 complete: January 2026*
+*Gamification Phase 2 complete: January 2026*
 *Added: Multi-Subject Platform Vision, COPPA Compliance, Interactive Database Learning: January 2026*
