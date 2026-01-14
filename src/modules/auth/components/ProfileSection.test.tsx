@@ -17,6 +17,14 @@ const mockProfile = {
   created_at: new Date().toISOString(),
   last_active_at: null,
   updated_at: null,
+  // Gamification fields
+  xp_total: 0,
+  current_level: 1,
+  current_streak: 0,
+  longest_streak: 0,
+  last_activity_date: null,
+  timezone: 'UTC',
+  sound_enabled: false,
 }
 
 describe('ProfileSection', () => {

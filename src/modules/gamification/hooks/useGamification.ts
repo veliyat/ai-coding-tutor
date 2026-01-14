@@ -84,7 +84,7 @@ export function useGamification(): UseGamificationReturn {
 
       if (fetchError) throw fetchError
 
-      setAchievements((data as Achievement[]) ?? [])
+      setAchievements((data as unknown as Achievement[]) ?? [])
     } catch (err) {
       console.error('Failed to fetch achievements:', err)
     }
@@ -108,7 +108,7 @@ export function useGamification(): UseGamificationReturn {
 
       if (fetchError) throw fetchError
 
-      setEarnedAchievements((data as StudentAchievement[]) ?? [])
+      setEarnedAchievements((data as unknown as StudentAchievement[]) ?? [])
     } catch (err) {
       console.error('Failed to fetch earned achievements:', err)
     }
