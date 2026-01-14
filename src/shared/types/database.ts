@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          criteria: Json
+          description: string
+          icon: string
+          id: string
+          slug: string
+          title: string
+          xp_reward: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          criteria: Json
+          description: string
+          icon: string
+          id?: string
+          slug: string
+          title: string
+          xp_reward?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          criteria?: Json
+          description?: string
+          icon?: string
+          id?: string
+          slug?: string
+          title?: string
+          xp_reward?: number | null
+        }
+        Relationships: []
+      }
       exercise_attempts: {
         Row: {
           code_submitted: string
@@ -148,6 +184,42 @@ export type Database = {
         }
         Relationships: []
       }
+      student_achievements: {
+        Row: {
+          achievement_id: string | null
+          earned_at: string | null
+          id: string
+          student_id: string | null
+        }
+        Insert: {
+          achievement_id?: string | null
+          earned_at?: string | null
+          id?: string
+          student_id?: string | null
+        }
+        Update: {
+          achievement_id?: string | null
+          earned_at?: string | null
+          id?: string
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_achievements_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_profiles: {
         Row: {
           access_code: string | null
@@ -155,14 +227,21 @@ export type Database = {
           auth_user_id: string | null
           avatar_emoji: string | null
           created_at: string | null
+          current_level: number | null
           current_skill_level: string | null
+          current_streak: number | null
           display_name: string | null
           id: string
           last_active_at: string | null
+          last_activity_date: string | null
           learning_goal: string | null
+          longest_streak: number | null
           preferred_style: string | null
           prior_experience: string | null
+          sound_enabled: boolean | null
+          timezone: string | null
           updated_at: string | null
+          xp_total: number | null
         }
         Insert: {
           access_code?: string | null
@@ -170,14 +249,21 @@ export type Database = {
           auth_user_id?: string | null
           avatar_emoji?: string | null
           created_at?: string | null
+          current_level?: number | null
           current_skill_level?: string | null
+          current_streak?: number | null
           display_name?: string | null
           id: string
           last_active_at?: string | null
+          last_activity_date?: string | null
           learning_goal?: string | null
+          longest_streak?: number | null
           preferred_style?: string | null
           prior_experience?: string | null
+          sound_enabled?: boolean | null
+          timezone?: string | null
           updated_at?: string | null
+          xp_total?: number | null
         }
         Update: {
           access_code?: string | null
@@ -185,14 +271,21 @@ export type Database = {
           auth_user_id?: string | null
           avatar_emoji?: string | null
           created_at?: string | null
+          current_level?: number | null
           current_skill_level?: string | null
+          current_streak?: number | null
           display_name?: string | null
           id?: string
           last_active_at?: string | null
+          last_activity_date?: string | null
           learning_goal?: string | null
+          longest_streak?: number | null
           preferred_style?: string | null
           prior_experience?: string | null
+          sound_enabled?: boolean | null
+          timezone?: string | null
           updated_at?: string | null
+          xp_total?: number | null
         }
         Relationships: []
       }
@@ -294,6 +387,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_xp: {
+        Args: { p_student_id: string; p_xp_amount: number }
+        Returns: {
+          level_up: boolean
+          new_level: number
+          new_xp_total: number
+          old_level: number
+        }[]
+      }
+      calculate_level: { Args: { xp: number }; Returns: number }
       cleanup_inactive_profiles: { Args: never; Returns: number }
       get_next_lesson: {
         Args: { p_student_id: string }
@@ -303,6 +406,23 @@ export type Database = {
           lesson_title: string
           module_title: string
         }[]
+      }
+      update_streak: {
+        Args: { p_student_id: string; p_timezone?: string }
+        Returns: {
+          new_streak: number
+          streak_continued: boolean
+          streak_started: boolean
+        }[]
+      }
+      upgrade_profile_to_registered: {
+        Args: {
+          p_access_code: string
+          p_auth_user_id: string
+          p_display_name: string
+          p_profile_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

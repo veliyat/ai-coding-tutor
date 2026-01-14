@@ -8,6 +8,7 @@ import { EditorPanel, type ExecutionResult } from '@/modules/editor'
 import { Header } from '@/modules/layout'
 import { useIdentity } from '@/modules/auth'
 import { TutorPanel, TutorToggle, ProactivePrompt, TutorBottomSheet, useTutorChat } from '@/modules/tutor'
+import { GamificationProvider } from '@/modules/gamification'
 import { useLesson } from '../hooks/useLesson'
 import { useProgress } from '../hooks/useProgress'
 import { useAttemptPersistenceListener } from '../hooks/useAttemptPersistence'
@@ -248,6 +249,7 @@ export function LessonLayout({ slug }: LessonLayoutProps) {
   }
 
   return (
+    <GamificationProvider>
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header - fixed */}
       <Header />
@@ -350,5 +352,6 @@ export function LessonLayout({ slug }: LessonLayoutProps) {
         </div>
       )}
     </div>
+    </GamificationProvider>
   )
 }
