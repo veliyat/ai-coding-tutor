@@ -40,14 +40,17 @@ export function useGamificationListener(
   // Process gamification event via Edge Function
   const processEvent = useCallback(
     async (eventName: string, eventData: Record<string, unknown>) => {
+      logger.debug('[Gamification] processEvent called:', { eventName, eventData, profileId })
+
       if (!profileId) {
-        logger.debug('No profile ID, skipping gamification')
+        logger.debug('[Gamification] No profile ID, skipping')
         return
       }
 
       setIsProcessing(true)
 
       try {
+        logger.debug('[Gamification] Calling Edge Function...')
         const { data, error } = await supabase.functions.invoke(
           'evaluate-gamification-event',
           {
@@ -59,8 +62,10 @@ export function useGamificationListener(
           }
         )
 
+        logger.debug('[Gamification] Edge Function response:', { data, error })
+
         if (error) {
-          logger.error('Gamification evaluation failed:', error)
+          logger.error('[Gamification] Edge Function error:', error)
           return
         }
 
@@ -106,6 +111,7 @@ export function useGamificationListener(
     'exercise:attempt_recorded',
     useCallback(
       (data) => {
+        logger.debug('[Gamification] Received exercise:attempt_recorded event', data)
         processEvent('exercise:attempt', {
           lessonId: data.lessonId,
           exerciseId: data.exerciseId,

@@ -212,6 +212,23 @@ Deno.serve(async (req) => {
       })
     }
 
+    // -------------------------------------------------------------------------
+    // Security: Validate studentId exists and is active
+    // This prevents arbitrary XP injection to non-existent profiles
+    // -------------------------------------------------------------------------
+    const { data: profile, error: profileError } = await supabase
+      .from('student_profiles')
+      .select('id, last_active_at')
+      .eq('id', studentId)
+      .single()
+
+    if (profileError || !profile) {
+      return new Response(JSON.stringify({ error: 'Invalid student' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const result: GamificationResult = {
       xp: null,
       streak: null,
